@@ -1,34 +1,38 @@
-package oopslab8;
+import java.io.*;
+import java.util.*;
 
-import java.io.*;  //imports all the packages regarding file io
-
-public class BankSummary {//class name is banksummary the main class is inside this 
+public class ErrorLogExtractor {
     public static void main(String[] args) {
-        int success = 0;//counters to count how many passed and failed
-        int failed = 0;
+        String inputFile = "logs.txt";
+        String outputFile = "error_report.txt";
+        List<String> errorLines = new ArrayList<>();
 
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("transactions.txt"));//open the transction txt for reading 
+        // Read file and collect ERROR lines
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
             String line;
-
-            while((line = br.readLine()) != null) {
-                String parts[] = line.split("\\|");//lines are split by these symbols in the text file 
-                String status = parts[3];
-
-                if(status.equalsIgnoreCase("SUCCESS"))
-                    success++;
-                else if(status.equalsIgnoreCase("FAILED"))
-                    failed++;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("ERROR:")) {
+                    errorLines.add(line);
+                }
             }
-            br.close();//closes the bufferreader
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+            return;
+        }
 
-            BufferedWriter bw = new BufferedWriter(new FileWriter("summary.txt"));//open new text file summary.txt
-            bw.write("Total Successful Transactions : " + success);
-            bw.newLine();
-            bw.write("Total Failed Transactions     : " + failed);
-            bw.close();
-
-            System.out.println("Summary file written");
-
-        } catch(Exception e) {
-            System.out.println(e);
+        // Write to output file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            if (errorLines.isEmpty()) {
+                writer.write("No critical errors today.");
+            } else {
+                for (String error : errorLines) {
+                    writer.write(error);
+                    writer.newLine();
+                }
+            }
+            System.out.println("Error report generated: " + outputFile);
+        } catch (IOException e) {
+            System.out.println("Error writing file: " + e.getMessage());
+        }
+    }
+}
